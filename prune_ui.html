@@ -1,0 +1,1514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prune</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #EEF2EF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F8F6;
+  --ink: #16201C;
+  --muted: #5E6B65;
+  --line: #D5DED8;
+  --moss: #2F5D50;
+  --moss-ink: #FFFFFF;
+  --moss-tint: #DCE8E1;
+  --hit: #F3E3C4;
+  --hit-ink: #6B4708;
+  --cut: #B4233C;
+  --cut-tint: #F8E1E5;
+  --focus: #2F5D50;
+  --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --text: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131B18;
+    --surface: #1A2420;
+    --surface-2: #1F2B26;
+    --ink: #E4ECE7;
+    --muted: #97A69F;
+    --line: #2D3B35;
+    --moss: #86BFAB;
+    --moss-ink: #10201A;
+    --moss-tint: #233A31;
+    --hit: #3F3217;
+    --hit-ink: #F2CF8A;
+    --cut: #F28B9B;
+    --cut-tint: #3C2026;
+    --focus: #86BFAB;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); background: var(--surface);
+  padding: 8px 14px; border-radius: 10px; cursor: pointer;
+  font-weight: 500; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--moss); border-color: var(--moss); color: var(--moss-ink); }
+.btn-primary:hover { filter: brightness(1.08); border-color: var(--moss); }
+.btn-cut { background: var(--cut); border-color: var(--cut); color: #fff; }
+@media (prefers-color-scheme: dark) { .btn-cut { color: #2A0A10; } }
+.btn-cut:hover { filter: brightness(1.08); border-color: var(--cut); }
+.btn-quiet { border-color: transparent; background: transparent; padding: 6px 10px; color: var(--muted); }
+.btn-quiet:hover { color: var(--ink); background: var(--surface-2); border-color: transparent; }
+
+/* ---------- connect view ---------- */
+.connect {
+  min-height: 100vh; display: grid; place-items: center; padding: 32px 16px;
+}
+.connect-card {
+  width: min(560px, 100%);
+}
+.wordmark {
+  font-family: var(--display); font-weight: 700; letter-spacing: -0.02em;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.wordmark svg { color: var(--moss); }
+.connect h1 { font-size: 56px; line-height: 1; margin: 0 0 16px; }
+.connect .lede { font-size: 18px; color: var(--muted); margin: 0 0 32px; max-width: 46ch; }
+.form {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px;
+  display: grid; gap: 16px;
+}
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 500; font-size: 14px; }
+.field input {
+  border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px;
+  padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
+}
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .field-pair { grid-template-columns: 1fr; } }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.check input { margin-top: 3px; accent-color: var(--moss); }
+.check small { display: block; color: var(--muted); }
+.form-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.error {
+  background: var(--cut-tint); color: var(--cut); border-radius: 10px; padding: 10px 12px; font-size: 14px;
+}
+details.help { margin-top: 20px; color: var(--muted); font-size: 14px; }
+details.help summary { cursor: pointer; color: var(--ink); font-weight: 500; }
+details.help ol { padding-left: 20px; margin: 10px 0 0; }
+details.help li { margin-bottom: 6px; }
+details.help ul { padding-left: 18px; margin: 6px 0 0; }
+.help-note { margin: 10px 0 0; }
+
+/* ---------- app shell ---------- */
+.shell { max-width: 1440px; margin: 0 auto; padding: 0 24px 140px; }
+@media (max-width: 640px) { .shell { padding: 0 16px 160px; } }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 0; flex-wrap: wrap;
+}
+.topbar .wordmark { font-size: 26px; }
+.top-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.me { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.me img, .av {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--moss-tint); object-fit: cover; flex: none;
+}
+.budget { display: grid; gap: 4px; min-width: 150px; font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) { .top-right { width: 100%; justify-content: space-between; } .budget { min-width: 0; flex: 1; } }
+.budget-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.budget-bar i { display: block; height: 100%; background: var(--moss); border-radius: 3px; }
+
+/* ---------- criteria sentence ---------- */
+.criteria {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 24px 24px 20px; margin-bottom: 16px;
+}
+.sentence {
+  font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.75;
+  letter-spacing: -0.01em; margin: 0;
+}
+@media (max-width: 640px) { .sentence { font-size: 19px; } .strip .grow { min-width: 100%; } }
+.sentence .lead { color: var(--muted); }
+.crit {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  border: 1.5px dashed var(--line); background: transparent; color: var(--muted);
+  border-radius: 999px; padding: 0 14px; margin: 3px 2px; cursor: pointer; white-space: nowrap;
+  font: inherit; line-height: 1.5; transition: background .15s, color .15s, border-color .15s;
+}
+.crit:hover { border-color: var(--muted); color: var(--ink); }
+.crit[aria-pressed="true"] {
+  border-style: solid; border-color: var(--moss); background: var(--moss-tint); color: var(--ink);
+}
+.crit input {
+  width: 4ch; min-width: 2ch; border: none; border-bottom: 2px solid currentColor; background: transparent;
+  font: inherit; text-align: center; padding: 0; color: inherit; border-radius: 0;
+  font-variant-numeric: tabular-nums;
+}
+.crit input:focus-visible { outline: none; border-bottom-color: var(--moss); }
+.matchmode {
+  font: inherit; border: none; background: none; color: var(--ink); cursor: pointer;
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px;
+  text-decoration-color: var(--moss); padding: 0;
+}
+.crit-foot {
+  display: flex; gap: 8px 16px; align-items: center; flex-wrap: wrap; margin-top: 14px;
+  padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px;
+}
+.crit-foot .label { color: var(--muted); }
+.preset {
+  border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px;
+  padding: 4px 12px; cursor: pointer; font-size: 14px;
+}
+.preset:hover { border-color: var(--moss); }
+.search {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--surface-2);
+  min-width: 240px;
+}
+@media (max-width: 760px) { .search { margin-left: 0; width: 100%; } }
+.search input { border: none; background: transparent; outline: none; width: 100%; }
+.search:focus-within { border-color: var(--moss); }
+
+/* ---------- task strips ---------- */
+.strip {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 16px; margin-bottom: 12px; font-size: 14px;
+}
+.strip strong { font-weight: 600; }
+.strip .msg { color: var(--muted); }
+.strip .grow { flex: 1; min-width: 200px; display: grid; gap: 6px; }
+.progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--moss); transition: width .4s; }
+.progress.indeterminate i { width: 30%; animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .progress.indeterminate i { animation: none; width: 100%; opacity: .5; } }
+.strip.unfollowing { border-color: var(--cut); }
+.strip.unfollowing .progress i { background: var(--cut); }
+.strip.notice { background: var(--surface-2); }
+
+/* ---------- table ---------- */
+.tablebar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0 10px; font-size: 14px;
+}
+.tablebar .count { color: var(--muted); margin-right: auto; }
+.tablewrap {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; min-width: 1160px; }
+th, td { padding: 10px 10px; text-align: left; vertical-align: middle; white-space: nowrap; }
+thead th {
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+  font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+th button {
+  border: none; background: none; padding: 4px 0; cursor: pointer; font: inherit; color: inherit;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+th button:hover { color: var(--ink); }
+th[aria-sort] button { color: var(--ink); }
+th .arrow { font-size: 11px; opacity: 0; }
+th[aria-sort] .arrow { opacity: 1; }
+th.num, td.num { text-align: right; }
+tbody tr { border-bottom: 1px solid var(--line); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.is-selected { background: var(--moss-tint); }
+tbody tr.is-kept td:not(.c-keep) { opacity: .55; }
+td.c-check, th.c-check { width: 44px; padding-right: 0; }
+td.c-keep, th.c-keep { padding-right: 16px; text-align: right; }
+.c-check input { width: 18px; height: 18px; accent-color: var(--moss); cursor: pointer; }
+.acct { display: flex; gap: 12px; align-items: center; min-width: 230px; max-width: 290px; white-space: normal; }
+.acct .who { min-width: 0; }
+.acct .name { font-weight: 600; text-decoration: none; }
+.acct .name:hover { text-decoration: underline; }
+.acct .handle { color: var(--muted); font-size: 13px; margin-left: 6px; }
+.acct .bio {
+  color: var(--muted); font-size: 13px; margin: 2px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.av-fallback {
+  display: grid; place-items: center; font-weight: 600; color: var(--moss); font-size: 14px;
+}
+.hit {
+  background: var(--hit); color: var(--hit-ink); border-radius: 6px; padding: 2px 8px; font-weight: 500;
+}
+.dim { color: var(--muted); }
+.yes { color: var(--moss); font-weight: 500; }
+.bar { display: inline-flex; align-items: center; gap: 8px; }
+.bar .track { width: 48px; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar .track i { display: block; height: 100%; background: var(--muted); }
+.hit .bar .track i { background: var(--hit-ink); }
+.pill {
+  display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 600;
+  border: 1px solid currentColor;
+}
+.pill.nft { color: var(--hit-ink); background: var(--hit); border-color: transparent; }
+.pill.maybe { color: var(--muted); }
+.pill.queued { color: var(--cut); background: var(--cut-tint); border-color: transparent; }
+.terms { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; max-width: 180px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.keep {
+  border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 3px 10px;
+  font-size: 13px; cursor: pointer; color: var(--muted);
+}
+.keep:hover { border-color: var(--moss); color: var(--ink); }
+.keep[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: var(--moss-ink); }
+.more { display: flex; justify-content: center; padding: 16px; }
+
+.empty {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 56px 24px; text-align: center;
+}
+.empty h2 { font-family: var(--display); font-size: 30px; margin: 0 0 8px; letter-spacing: -0.01em; }
+.load { display: grid; gap: 16px; max-width: 760px; }
+.load h2 { font-family: var(--display); font-size: 30px; margin: 0; letter-spacing: -0.01em; }
+.empty .load > p, .load > p { margin: 0; color: var(--muted); max-width: 60ch; }
+.load-opts { display: grid; gap: 10px; }
+.load-opt {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; cursor: pointer; background: var(--surface);
+}
+.load-opt:has(input:checked) { border-color: var(--moss); background: var(--moss-tint); }
+.load-opt.required { cursor: default; }
+.load-opt input { width: 18px; height: 18px; accent-color: var(--moss); margin: 0; }
+.load-opt b { font-weight: 600; display: block; }
+.load-opt small { color: var(--muted); display: block; font-size: 13px; }
+.load-cost { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.load-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.load-foot .dim { font-size: 13px; max-width: 52ch; }
+.linkish { border: none; background: none; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+#emptyState { text-align: left; padding: 32px; }
+dialog.wide { width: min(640px, calc(100% - 32px)); }
+.spend { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.spend b { font-variant-numeric: tabular-nums; }
+.no-style .style-only { display: none !important; }
+.snapline {
+  display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap;
+  font-size: 14px; color: var(--muted); margin: 0 0 12px; padding: 0 4px;
+}
+.snapline strong { color: var(--ink); font-weight: 600; }
+.snapline .old { color: var(--hit-ink); background: var(--hit); border-radius: 6px; padding: 1px 8px; }
+.snapline .grow { flex: 1; min-width: 240px; }
+.snaps { display: grid; gap: 8px; }
+.snaps h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.snaps small { color: var(--muted); font-size: 13px; }
+.snap {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 8px 12px; align-items: center;
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--surface);
+}
+.snap.current { border-color: var(--moss); }
+.snap .when { font-weight: 500; }
+.snap .what { color: var(--muted); font-size: 13px; }
+.sentence-hint { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.crit input.words-in { width: auto; min-width: 4ch; text-align: left; font-variant-numeric: normal; cursor: text; }
+.crit input.words-in::placeholder { color: var(--muted); opacity: .7; }
+mark.hit-word { background: var(--hit); color: var(--hit-ink); border-radius: 3px; padding: 0 2px; }
+.quickbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -2px 0 12px; font-size: 14px; color: var(--muted); }
+.quickbar input, .quickbar select {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink);
+}
+.quickbar .qs-n { width: 5.5em; }
+.crit input { cursor: ew-resize; touch-action: none; }
+.crit input:focus { cursor: text; }
+body.scrubbing, body.scrubbing * { cursor: ew-resize !important; user-select: none; }
+.load-note { background: var(--hit); color: var(--hit-ink); border-radius: 10px; padding: 10px 14px; font-size: 14px; margin: 0; }
+.style-pick { display: grid; gap: 8px; }
+.style-pick small { color: var(--muted); font-size: 13px; }
+.style-cost { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; width: fit-content; }
+.seg label { cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: block; padding: 6px 16px; font-variant-numeric: tabular-nums; border-left: 1px solid var(--line); }
+.seg label:first-child span { border-left: none; }
+.seg input:checked + span { background: var(--moss); color: var(--moss-ink); }
+.seg input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
+.load-group {
+  border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 0; min-width: 0;
+  display: grid; gap: 8px; background: var(--surface);
+}
+.load-group > small { color: var(--muted); font-size: 13px; }
+.group-head { display: flex; align-items: center; gap: 10px; padding: 0; float: none; width: 100%; }
+.group-head b { font-weight: 600; }
+.group-head .load-cost { margin-left: auto; }
+.pill.req { color: var(--moss-ink); background: var(--moss); border-color: transparent; }
+.choice {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer;
+}
+.choice:has(input:checked) { border-color: var(--moss); background: var(--moss-tint); }
+.choice input { width: 18px; height: 18px; accent-color: var(--moss); margin: 0; }
+.choice b { font-weight: 500; }
+.choice small { color: var(--muted); display: block; font-size: 13px; }
+.choice-action { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-left: 42px; }
+.choice-action small { color: var(--muted); font-size: 13px; flex: 1; min-width: 200px; }
+.archive-opt {
+  display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
+  border: 1px dashed var(--line); border-radius: 14px; padding: 12px 16px 12px 48px;
+}
+.archive-opt b { font-weight: 600; display: block; }
+.archive-opt.suggested { border-style: solid; border-color: var(--hit-ink); background: var(--hit); }
+.archive-opt.suggested b, .archive-opt.suggested small { color: var(--hit-ink); }
+.archive-opt small { color: var(--muted); display: block; font-size: 13px; }
+@media (max-width: 560px) { .archive-opt { grid-template-columns: 1fr; padding-left: 16px; } }
+.load-or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.load-or::before, .load-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.empty p { color: var(--muted); margin: 0 auto 24px; max-width: 52ch; }
+
+/* ---------- selection bar ---------- */
+.actionbar {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  width: min(880px, calc(100% - 32px));
+  background: var(--ink); color: var(--bg); border-radius: 16px;
+  padding: 12px 12px 12px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  box-shadow: 0 12px 32px rgba(10, 30, 22, .28);
+  animation: rise .2s ease-out;
+}
+@keyframes rise { from { transform: translate(-50%, 16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .actionbar { animation: none; } }
+.actionbar .sel { font-weight: 600; }
+.actionbar .est { opacity: .75; font-size: 14px; margin-right: auto; }
+.actionbar .btn-quiet { color: var(--bg); opacity: .8; }
+.actionbar .btn-quiet:hover { background: transparent; opacity: 1; color: var(--bg); }
+
+/* ---------- dialogs ---------- */
+dialog {
+  border: none; border-radius: 18px; padding: 0; width: min(520px, calc(100% - 32px));
+  background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgba(0,0,0,.3);
+}
+dialog[open] { max-height: calc(100vh - 32px); overflow-y: auto; }
+dialog::backdrop { background: rgba(16, 28, 23, .45); }
+.dlg { padding: 24px; display: grid; gap: 16px; }
+.dlg h2 { font-family: var(--display); font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+.dlg p { margin: 0; color: var(--muted); }
+.dlg .actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.who-list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.who-list li { background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 13px; }
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.settings-grid .field input { font-family: var(--text); }
+.settings-grid .full { grid-column: 1 / -1; }
+.sep { border: none; border-top: 1px solid var(--line); margin: 4px 0; }
+.data-where { display: grid; gap: 4px; font-size: 14px; }
+.data-where small { color: var(--muted); font-size: 13px; }
+.data-where code { font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 8px; overflow-wrap: anywhere; user-select: all; }
+.danger-row { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+.danger-row b { font-weight: 600; display: block; font-size: 14px; }
+.danger-row small { color: var(--muted); font-size: 13px; display: block; }
+.demo-banner {
+  background: var(--hit); color: var(--hit-ink); text-align: center; font-size: 14px; padding: 8px 16px;
+}
+.toast {
+  position: fixed; top: 52px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px;
+  z-index: 10; max-width: calc(100% - 32px);
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5 19c4-1 7-4 8-9M13 10c1-3 3-5 6-6-1 3-2 6-6 6Zm0 0c-3 0-5-1-6-4 3 0 5 1 6 4Z"/></symbol>
+</svg>
+
+<div class="demo-banner" id="demoBanner" hidden>Demo mode with made-up accounts. Nothing here touches your real X account or costs money, and unfollowing runs 10× faster.</div>
+
+<!-- ======================= connect ======================= -->
+<main id="connectView" class="connect" hidden>
+  <div class="connect-card">
+    <h1 class="wordmark"><svg width="44" height="44"><use href="#logo"/></svg>Prune</h1>
+    <p class="lede">Find the accounts you no longer want to follow on X, review them in one table, and unfollow at a safe pace.</p>
+    <form id="connectForm" class="form" autocomplete="off">
+      <div class="field-pair">
+        <div class="field"><label for="k1">Consumer Key</label><input id="k1" name="api_key" required spellcheck="false"></div>
+        <div class="field"><label for="k2">Secret Key</label><input id="k2" name="api_secret" type="password" required spellcheck="false"></div>
+      </div>
+      <div class="field-pair">
+        <div class="field"><label for="k3">Access Token</label><input id="k3" name="access_token" required spellcheck="false"></div>
+        <div class="field"><label for="k4">Access Token Secret</label><input id="k4" name="access_secret" type="password" required spellcheck="false"></div>
+      </div>
+      <p class="dim" style="margin:0;font-size:14px">You won't need the Bearer Token. It can only read, so it can't unfollow.</p>
+      <label class="check"><input type="checkbox" name="remember" checked>
+        <span>Remember these on this computer<small>Saved in the “Your data - do not share” folder inside your Prune folder. Turn off to enter them each time.</small></span></label>
+      <div id="connectError" class="error" hidden></div>
+      <div class="form-foot">
+        <span class="dim" style="font-size:14px">Keys never leave this computer except to talk to X.</span>
+        <button class="btn btn-primary" id="connectBtn" type="submit">Connect to X</button>
+      </div>
+    </form>
+    <details class="help">
+      <summary>Where do I get these?</summary>
+      <ol>
+        <li>Sign in to the <a href="https://console.x.com" target="_blank" rel="noopener">X Developer Console</a> and open <b>Apps</b>.</li>
+        <li>Pick the app Prune will use:
+          <ul>
+            <li><b>Create a new app</b> with <b>Create App</b>. This is the simplest choice, and it keeps Prune separate from anything else you've built.</li>
+            <li><b>Or use an existing app</b> by opening it from the list. Regenerating its keys below stops anything else that uses that app until you give it the new keys.</li>
+          </ul></li>
+        <li>On the app's <b>Keys &amp; Tokens</b> tab, generate the <b>Consumer Key</b>, or choose <b>Regenerate</b> if the app already has one. Copy the <b>Consumer Key</b> and <b>Secret Key</b> right away; X only shows the secret once.</li>
+        <li>On the same tab, generate or regenerate the <b>Access Token</b>, and copy the <b>Access Token</b> and <b>Access Token Secret</b>.</li>
+      </ol>
+      <p class="help-note">If unfollowing ever fails with a permission error: on <b>Keys &amp; Tokens</b>, open <b>User authentication settings</b>, set <b>App permissions</b> to <b>Read and write</b>, and save. The form also asks for an app type and two web addresses; any address works, such as your X profile link. Then regenerate the Access Token and enter the new token and secret here.</p>
+    </details>
+  </div>
+</main>
+
+<!-- ======================= app ======================= -->
+<div id="appView" class="shell" hidden>
+  <header class="topbar">
+    <div class="wordmark"><svg width="28" height="28"><use href="#logo"/></svg>Prune</div>
+    <div class="top-right">
+      <div class="budget" id="budget" title="Unfollows in the last 24 hours, against your daily limit"></div>
+      <div class="me" id="me"></div>
+      <button class="btn btn-quiet" id="settingsBtn">Settings</button>
+    </div>
+  </header>
+
+  <div id="strips"></div>
+
+  <section id="emptyState" class="empty" hidden></section>
+
+  <section id="workspace" hidden>
+    <div class="snapline" id="snapLine"></div>
+    <div class="criteria">
+      <p class="sentence-hint">Click a phrase to turn it on or off. Drag a number left or right to change it, or click it to type.</p>
+      <p class="sentence" id="sentence">
+        <span class="lead">Show accounts that</span>
+        <span class="crit" role="button" tabindex="0" data-crit="inactive" aria-pressed="false">haven't posted in <input class="num" data-param="days" inputmode="numeric" aria-label="days" title="Drag left or right to change, or click to type"> days</span>
+        <span class="crit" role="button" tabindex="0" data-crit="nofollow" aria-pressed="false">don't follow me back</span>
+        <span class="crit" role="button" tabindex="0" data-crit="young" aria-pressed="false">joined less than <input class="num" data-param="days" inputmode="numeric" aria-label="days" title="Drag left or right to change, or click to type"> days ago</span>
+        <span class="crit" role="button" tabindex="0" data-crit="many" aria-pressed="false">have over <input class="num wide" data-param="n" inputmode="numeric" aria-label="followers" title="Drag left or right to change, or click to type"> followers</span>
+        <span class="crit" role="button" tabindex="0" data-crit="few" aria-pressed="false">have under <input class="num wide" data-param="n" inputmode="numeric" aria-label="followers" title="Drag left or right to change, or click to type"> followers</span>
+        <span class="crit style-only" role="button" tabindex="0" data-crit="replies" aria-pressed="false">mostly reply, <input class="num" data-param="pct" inputmode="numeric" aria-label="percent" title="Drag left or right to change, or click to type">% or more</span>
+        <span class="crit style-only" role="button" tabindex="0" data-crit="reposts" aria-pressed="false">mostly repost, <input class="num" data-param="pct" inputmode="numeric" aria-label="percent" title="Drag left or right to change, or click to type">% or more</span>
+        <span class="crit" role="button" tabindex="0" data-crit="nft" aria-pressed="false">look like NFT projects</span>
+        <span class="crit" role="button" tabindex="0" data-crit="words" aria-pressed="false">mention <input class="words-in" data-param="text" placeholder="any words" spellcheck="false" aria-label="Words to look for in bios, separated by commas" title="Type words or phrases, separated by commas"> in their bio</span>
+        <span class="lead" id="matchWrap">matching <button class="matchmode" id="matchMode"></button> of these</span>
+      </p>
+      <div class="crit-foot">
+        <span class="label">Start from</span>
+        <button class="preset" data-preset="nft">NFT projects</button>
+        <button class="preset" data-preset="quiet">Quiet for 6 months</button>
+        <button class="preset" data-preset="oneway">Not following back</button>
+        <button class="preset style-only" data-preset="reposters">Mostly reposts</button>
+        <button class="preset" data-preset="clear">Everyone</button>
+        <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+          <input id="search" placeholder="Search names and bios" aria-label="Search names and bios"></label>
+      </div>
+    </div>
+
+    <div class="tablebar">
+      <span class="count" id="count"></span>
+      <label class="check" style="align-items:center"><input type="checkbox" id="hideKept"> <span>Hide kept</span></label>
+      <label class="check" style="align-items:center"><input type="checkbox" id="hideNever"> <span>Hide never posted</span></label>
+      <button class="btn style-only" id="analyzeBtn"></button>
+      <button class="btn" id="rescanBtn">Snapshots and refresh</button>
+    </div>
+    <div class="quickbar">
+      <span>Quick select the first</span>
+      <input id="qsN" class="qs-n num" type="number" min="1" value="100" aria-label="How many accounts">
+      <span>shown, by</span>
+      <select id="qsBy" aria-label="Rank by">
+        <option value="idle">longest since last post</option>
+        <option value="newest">newest accounts</option>
+        <option value="oldest">oldest accounts</option>
+      </select>
+      <button class="btn" id="qsBtn">Select</button>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="c-check"><input type="checkbox" id="selectAll" aria-label="Select all shown"></th>
+            <th data-sort="name"><button>Account <span class="arrow"></span></button></th>
+            <th data-sort="last"><button>Last post <span class="arrow"></span></button></th>
+            <th data-sort="age"><button>Account age <span class="arrow"></span></button></th>
+            <th data-sort="follows"><button>Follows you <span class="arrow"></span></button></th>
+            <th class="num" data-sort="followers"><button>Followers <span class="arrow"></span></button></th>
+            <th class="num" data-sort="following"><button>Following <span class="arrow"></span></button></th>
+            <th class="style-only" data-sort="reposts"><button>Reposts <span class="arrow"></span></button></th>
+            <th class="style-only" data-sort="replies"><button>Replies <span class="arrow"></span></button></th>
+            <th data-sort="nft"><button>NFT signs <span class="arrow"></span></button></th>
+            <th class="c-keep">Keep</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="more" id="more" hidden><button class="btn" id="moreBtn"></button></div>
+    </div>
+  </section>
+</div>
+
+<div class="actionbar" id="actionbar" hidden>
+  <span class="sel" id="selCount"></span>
+  <span class="est" id="selEst"></span>
+  <button class="btn btn-quiet" id="clearSel">Clear</button>
+  <button class="btn btn-cut" id="unfollowBtn"></button>
+</div>
+
+<dialog id="confirmDlg">
+  <form method="dialog" class="dlg">
+    <h2 id="confirmTitle"></h2>
+    <p id="confirmBody"></p>
+    <ul class="who-list" id="confirmList"></ul>
+    <div id="confirmExtra"></div>
+    <div class="actions">
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn btn-cut" value="ok" id="confirmOk"></button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg" id="settingsForm">
+    <h2>Settings</h2>
+    <div class="spend" id="spendLine"></div>
+    <p>Pacing keeps your account looking like a person is unfollowing. The defaults sit at the careful end of what people report as safe. Costs are used for estimates only; check your plan in the X developer console.</p>
+    <div class="settings-grid">
+      <div class="field"><label for="s1">Unfollows per 24 hours</label><input id="s1" name="daily_cap" type="number" min="1" max="400"></div>
+      <div class="field"><label for="s2">Posts to check per account</label><input id="s2" name="posts_to_check" type="number" min="5" max="100"></div>
+      <div class="field"><label for="s3">Shortest pause (seconds)</label><input id="s3" name="min_delay" type="number" min="5" max="600"></div>
+      <div class="field"><label for="s4">Longest pause (seconds)</label><input id="s4" name="max_delay" type="number" min="5" max="900"></div>
+      <div class="field"><label for="s5">Break after this many</label><input id="s5" name="batch_size" type="number" min="1" max="200"></div>
+      <div class="field"><label for="s6">Break length (minutes)</label><input id="s6" name="batch_break" type="number" min="0" max="240"></div>
+      <div class="field"><label for="s7">Cost per account in your lists ($)</label><input id="s7" name="price_per_account" type="number" min="0" max="1" step="0.0001"></div>
+      <div class="field"><label for="s8">Cost per post read ($)</label><input id="s8" name="price_per_post" type="number" min="0" max="1" step="0.0001"></div>
+      <label class="check full"><input type="checkbox" name="show_posting_style">
+        <span>Show posting-style tools<small>Adds the Reposts and Replies columns. Measuring them reads recent posts from every account you check, which costs far more than loading your lists.</small></span></label>
+    </div>
+    <div class="actions">
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn btn-primary" value="save">Save settings</button>
+    </div>
+    <hr class="sep">
+    <div class="data-where"><b>Where Prune saves things</b>
+      <small>Your keys, snapshots, kept accounts and history are all in this folder. Delete it to remove everything. Don't share it, since it holds your keys.</small>
+      <code id="dataDir"></code></div>
+    <div class="danger-row">
+      <span><b>Forget API keys</b><small>Removes your keys from this computer. Snapshots, kept accounts and history stay, ready when you reconnect.</small></span>
+      <button class="btn" type="button" id="disconnectBtn">Forget keys</button>
+    </div>
+    <div class="danger-row">
+      <span><b>Erase saved data</b><small>Deletes snapshots, kept accounts, unfollow history and the spend tally. Your keys stay. Export any snapshot you want first.</small></span>
+      <button class="btn" type="button" id="forgetBtn">Erase data</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+<input type="file" id="archiveFile" accept=".zip,.js,application/zip" hidden>
+<dialog id="loadDlg" class="wide"><div class="dlg" id="loadDlgBody"></div></dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const TOKEN = "__PRUNE_TOKEN__";
+const PAGE = 200;
+const DAY = 86400000;
+const $ = (id) => document.getElementById(id);
+const fmt = new Intl.NumberFormat();
+
+const DEFAULT_CRIT = {
+  inactive: { on: false, days: 180 }, nofollow: { on: false }, young: { on: false, days: 90 }, many: { on: false, n: 100000 },
+  few: { on: false, n: 100 }, replies: { on: false, pct: 70 }, reposts: { on: false, pct: 50 }, nft: { on: false }, words: { on: false, text: "" }, match: "any",
+};
+const S = {
+  status: null, version: -1, accounts: [], view: [], selected: new Set(),
+  sort: { key: "last", dir: "desc" }, limit: PAGE, search: "",
+  crit: loadCrit(),
+};
+
+function loadCrit() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("prune.crit"));
+    if (saved) return Object.assign(structuredClone(DEFAULT_CRIT), saved);
+  } catch (e) {}
+  return structuredClone(DEFAULT_CRIT);
+}
+function saveCrit() { try { localStorage.setItem("prune.crit", JSON.stringify(S.crit)); } catch (e) {} }
+
+async function api(path, body) {
+  const res = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "X-Prune-Token": TOKEN, "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 4000);
+}
+
+/* ---------------- NFT signals ---------------- */
+const NFT_STRONG = ["nft", "nfts", "opensea", "magic eden", "magiceden", "free mint", "minting", "mint live",
+  "mint is live", "minted out", "whitelist", "allowlist", "pfp", "pfps", "10k", "10,000", "floor price",
+  "sold out", "holders", "genesis collection", "generative collection", "ordinals", "inscriptions"];
+const NFT_WEAK = ["web3", "eth", "ethereum", "solana", "discord", "dao", "collection", "metaverse", "airdrop",
+  "wl", "roadmap", "utility", "on-chain", "onchain", "degen", "genesis", "mint", "blockchain", "crypto", "gm"];
+const NFT_DOMAINS = ["opensea.io", "magiceden.io", "foundation.app", "zora.co", "rarible.com", "superrare.com",
+  "objkt.com", "tensor.trade", "blur.io", "niftygateway.com", "discord.gg", "discord.com/invite"];
+const wordRe = (t) => new RegExp(`(^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i");
+const STRONG_RE = NFT_STRONG.map((t) => [t, wordRe(t)]);
+const WEAK_RE = NFT_WEAK.map((t) => [t, wordRe(t)]);
+
+function nftSignals(a) {
+  const text = `${a.name} ${a.username} ${a.bio}`.toLowerCase();
+  const links = (a.links || []).join(" ").toLowerCase();
+  const terms = []; let score = 0;
+  for (const [t, re] of STRONG_RE) if (re.test(text)) { terms.push(t); score += 2; }
+  for (const [t, re] of WEAK_RE) if (re.test(text) && !terms.some((x) => x.includes(t))) { terms.push(t); score += 1; }
+  for (const d of NFT_DOMAINS) if (links.includes(d) || text.includes(d)) { terms.push(d); score += 2; }
+  if (/\.eth\b/i.test(a.name)) { terms.push(".eth name"); score += 1; }
+  return { score, terms };
+}
+
+/* ---------------- derived data ---------------- */
+function derive(a) {
+  const now = Date.now();
+  const lastMs = a.last_post ?? a.analysis?.latest ?? null;
+  a.days = lastMs ? Math.max(0, Math.floor((now - lastMs) / DAY)) : null;
+  const joinedMs = a.joined ? Date.parse(a.joined) : NaN;
+  a.ageDays = Number.isNaN(joinedMs) ? null : Math.max(0, Math.floor((now - joinedMs) / DAY));
+  a.neverPosted = !lastMs && a.posts === 0;
+  const an = a.analysis;
+  a.replyPct = an && !an.error && an.sample > 0 ? an.replies / an.sample : null;
+  a.repostPct = an && !an.error && an.sample > 0 ? an.reposts / an.sample : null;
+  a.nft = nftSignals(a);
+  a.search = `${a.name} ${a.username} ${a.bio}`.toLowerCase();
+  return a;
+}
+
+const TESTS = {
+  inactive: (a, c) => a.neverPosted || (a.days !== null && a.days >= c.days),
+  nofollow: (a) => a.follows_you === false,
+  young: (a, c) => a.ageDays !== null && a.ageDays < c.days,
+  many: (a, c) => a.followers > c.n,
+  few: (a, c) => a.followers < c.n,
+  replies: (a, c) => a.replyPct !== null && a.replyPct * 100 >= c.pct,
+  reposts: (a, c) => a.repostPct !== null && a.repostPct * 100 >= c.pct,
+  nft: (a) => a.nft.score >= 3,
+  words: (a, c) => !!wordsRe(c.text) && wordsRe(c.text).test(a.bio || ""),
+};
+
+/* your own words: comma-separated, case-insensitive, matched at the start of a word
+   ("crypto" finds "cryptocurrency", "art" doesn't find "start") */
+const _wordsCache = {};
+function wordsRe(text) {
+  if (!(text in _wordsCache)) {
+    const terms = String(text || "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    _wordsCache[text] = terms.length ? new RegExp(`(^|[^\\p{L}\\p{N}])(${terms.join("|")})`, "iu") : null;
+  }
+  return _wordsCache[text];
+}
+function sizeTextInput(input) {
+  const ctx = (sizeTextInput.c ||= document.createElement("canvas").getContext("2d"));
+  const cs = getComputedStyle(input);
+  ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  input.style.width = `${Math.ceil(ctx.measureText(input.value || input.placeholder).width) + 14}px`;
+}
+function highlightBio(bio) {
+  const c = S.crit.words, re = c.on && wordsRe(c.text);
+  if (!re || !bio) return esc(bio);
+  const g = new RegExp(re.source, "giu");
+  let out = "", last = 0, m;
+  while ((m = g.exec(bio))) {
+    const start = m.index + m[1].length;
+    out += esc(bio.slice(last, start)) + `<mark class="hit-word">${esc(m[2])}</mark>`;
+    last = start + m[2].length;
+    if (g.lastIndex === m.index) g.lastIndex++;
+  }
+  return out + esc(bio.slice(last));
+}
+
+const STYLE_CRIT = ["replies", "reposts"];
+function styleOn() { return !!S.status?.settings?.show_posting_style; }
+function activeCrit() { return Object.keys(TESTS).filter((k) => S.crit[k].on && (styleOn() || !STYLE_CRIT.includes(k))); }
+
+function hits(a) {
+  const out = {};
+  for (const k of activeCrit()) out[k] = TESTS[k](a, S.crit[k]);
+  return out;
+}
+
+const SORTS = {
+  name: (a) => a.name.toLowerCase(),
+  last: (a) => (a.neverPosted ? 1e9 : a.days),
+  follows: (a) => (a.follows_you === null ? null : a.follows_you ? 1 : 0),
+  age: (a) => a.ageDays,
+  followers: (a) => a.followers,
+  following: (a) => a.following,
+  replies: (a) => a.replyPct,
+  reposts: (a) => a.repostPct,
+  nft: (a) => (a.nft.score || null),
+};
+
+function computeView() {
+  const active = activeCrit();
+  const q = S.search.trim().toLowerCase();
+  let rows = S.accounts.filter((a) => {
+    if (S.hideKept && a.keep) return false;
+    if (S.hideNever && a.neverPosted) return false;
+    if (q && !a.search.includes(q)) return false;
+    if (!active.length) return true;
+    const h = hits(a);
+    const results = active.map((k) => h[k]);
+    return S.crit.match === "all" ? results.every(Boolean) : results.some(Boolean);
+  });
+  const key = SORTS[S.sort.key]; const dir = S.sort.dir === "asc" ? 1 : -1;
+  rows.sort((x, y) => {
+    const a = key(x), b = key(y);
+    if (a === null || a === undefined) return (b === null || b === undefined) ? 0 : 1;
+    if (b === null || b === undefined) return -1;
+    return (a < b ? -1 : a > b ? 1 : 0) * dir;
+  });
+  S.view = rows;
+}
+
+/* ---------------- rendering ---------------- */
+function duration(days) {
+  if (days < 1) return "Under a day";
+  if (days < 60) return `${days} day${days === 1 ? "" : "s"}`;
+  if (days < 730) return `${Math.round(days / 30.4)} months`;
+  return `${(days / 365).toFixed(1).replace(/\.0$/, "")} years`;
+}
+
+function ago(days) {
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 60) return `${days} days ago`;
+  if (days < 730) return `${Math.round(days / 30.4)} months ago`;
+  return `${(days / 365).toFixed(1).replace(/\.0$/, "")} years ago`;
+}
+
+function cell(content, isHit) { return isHit ? `<span class="hit">${content}</span>` : content; }
+
+function rowHtml(a) {
+  const h = hits(a);
+  const selectable = !a.keep && !a.queued;
+  const sel = S.selected.has(a.id);
+  const initials = esc((a.name || a.username || "?").trim().charAt(0).toUpperCase());
+  const avatar = a.avatar
+    ? `<img class="av" src="${esc(a.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+    : `<span class="av av-fallback">${initials}</span>`;
+
+  let last;
+  if (a.neverPosted) last = cell("Never posted", h.inactive);
+  else if (a.days === null) last = `<span class="dim" title="X doesn't show this for private accounts">Private</span>`;
+  else last = `<span title="${new Date(Date.now() - a.days * DAY).toLocaleDateString()}">${cell(ago(a.days), h.inactive)}</span>`;
+
+  const age = a.ageDays === null ? `<span class="dim">—</span>`
+    : `<span title="Joined ${new Date(a.joined).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}">${cell(duration(a.ageDays), h.young)}</span>`;
+  const follows = a.follows_you === null ? `<span class="dim">Not loaded</span>`
+    : a.follows_you ? `<span class="yes">Yes</span>` : cell("No", h.nofollow);
+
+  const an = a.analysis;
+  const share = (value, isHit) => {
+    if (an?.error) return `<span class="dim" title="${esc(an.error)}">Unavailable</span>`;
+    if (an && an.sample === 0) return `<span class="dim">No posts</span>`;
+    if (value === null) return `<span class="dim">—</span>`;
+    const pct = Math.round(value * 100);
+    const own = an.sample - an.replies - an.reposts;
+    const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+    const tip = `Last ${an.sample} posts: ${n(an.reposts, "repost", "reposts")}, ${n(an.replies, "reply", "replies")} to others, ${own} of their own` +
+      (an.self_replies ? ` (including ${n(an.self_replies, "thread post", "thread posts")})` : "");
+    return `<span title="${tip}">${cell(`<span class="bar"><span class="track"><i style="width:${pct}%"></i></span><span class="num">${pct}%</span></span>`, isHit)}</span>`;
+  };
+  const reposts = share(a.repostPct, h.reposts);
+  const replies = share(a.replyPct, h.replies);
+
+  let nft = "";
+  if (a.nft.score >= 3) nft = `<span class="pill nft">Likely</span><span class="terms" title="${esc(a.nft.terms.join(", "))}">${esc(a.nft.terms.join(", "))}</span>`;
+  else if (a.nft.score > 0) nft = `<span class="pill maybe">Weak</span><span class="terms" title="${esc(a.nft.terms.join(", "))}">${esc(a.nft.terms.join(", "))}</span>`;
+
+  const status = a.queued ? ` <span class="pill queued">Queued</span>` : "";
+
+  return `<tr data-id="${a.id}" class="${sel ? "is-selected" : ""} ${a.keep ? "is-kept" : ""}">
+    <td class="c-check"><input type="checkbox" data-sel="${a.id}" ${sel ? "checked" : ""} ${selectable ? "" : "disabled"}
+      aria-label="Select @${esc(a.username)}"></td>
+    <td><div class="acct">${avatar}<div class="who">
+      <a class="name" href="https://x.com/${esc(a.username)}" target="_blank" rel="noopener">${esc(a.name || a.username)}</a><span class="handle">@${esc(a.username)}</span>${status}
+      <p class="bio" title="${esc(a.bio)}">${highlightBio(a.bio) || "&nbsp;"}</p></div></div></td>
+    <td>${last}</td>
+    <td>${age}</td>
+    <td>${follows}</td>
+    <td class="num">${cell(fmt.format(a.followers), h.many || h.few)}</td>
+    <td class="num">${fmt.format(a.following)}</td>
+    <td class="style-only">${reposts}</td>
+    <td class="style-only">${replies}</td>
+    <td>${nft}</td>
+    <td class="c-keep"><button class="keep" data-keep="${a.id}" aria-pressed="${a.keep}" title="Kept accounts can't be selected for unfollowing">${a.keep ? "Kept" : "Keep"}</button></td>
+  </tr>`;
+}
+
+function renderTable() {
+  computeView();
+  const shown = S.view.slice(0, S.limit);
+  $("rows").innerHTML = shown.map(rowHtml).join("") ||
+    `<tr><td colspan="11"><div class="empty" style="border:none"><h2>No accounts match</h2><p>Try turning off a rule or switching to “any” of these.</p></div></td></tr>`;
+  const total = S.accounts.length;
+  const kept = S.accounts.filter((a) => a.keep).length;
+  const never = S.accounts.filter((a) => a.neverPosted && !(S.hideKept && a.keep)).length;
+  $("count").textContent = (S.view.length === total
+    ? `${fmt.format(total)} accounts you follow`
+    : `Showing ${fmt.format(S.view.length)} of ${fmt.format(total)} accounts you follow`) +
+    (S.hideKept && kept ? `, ${fmt.format(kept)} kept hidden` : "") +
+    (S.hideNever && never ? `, ${fmt.format(never)} never posted hidden` : "");
+  $("hideKept").checked = S.hideKept;
+  $("hideNever").checked = S.hideNever;
+  const rest = S.view.length - shown.length;
+  $("more").hidden = rest <= 0;
+  $("moreBtn").textContent = `Show ${fmt.format(Math.min(PAGE, rest))} more`;
+  document.querySelectorAll("th[data-sort]").forEach((th) => {
+    const on = th.dataset.sort === S.sort.key;
+    if (on) th.setAttribute("aria-sort", S.sort.dir === "asc" ? "ascending" : "descending"); else th.removeAttribute("aria-sort");
+    th.querySelector(".arrow").textContent = on && S.sort.dir === "asc" ? "▲" : "▼";
+  });
+  const unchecked = S.view.filter((a) => !a.analysis).length;
+  $("analyzeBtn").textContent = unchecked ? `Check posting style for ${fmt.format(unchecked)} shown` : "Posting style checked for all shown";
+  $("analyzeBtn").disabled = !unchecked || isReading();
+  $("rescanBtn").disabled = isReading();
+  renderSelection();
+}
+
+function selectableShown() { return S.view.filter((a) => !a.keep && !a.queued); }
+
+function renderSelection() {
+  // drop selections that are no longer valid
+  const valid = new Set(S.accounts.filter((a) => !a.keep && !a.queued).map((a) => a.id));
+  for (const id of [...S.selected]) if (!valid.has(id)) S.selected.delete(id);
+  const n = S.selected.size;
+  $("actionbar").hidden = n === 0;
+  const pickable = selectableShown();
+  const all = $("selectAll");
+  const picked = pickable.filter((a) => S.selected.has(a.id)).length;
+  all.checked = pickable.length > 0 && picked === pickable.length;
+  all.indeterminate = picked > 0 && picked < pickable.length;
+  if (!n) return;
+  $("selCount").textContent = `${fmt.format(n)} selected`;
+  const s = S.status?.settings || { daily_cap: 100 };
+  const left = Math.max(0, s.daily_cap - (S.status?.budget.used || 0));
+  const queue = S.status?.write.queue || 0;
+  const total = n + queue;
+  $("selEst").textContent = total <= left ? "Finishes today at a safe pace"
+    : `About ${Math.ceil((total - left) / s.daily_cap) + 1} days at ${s.daily_cap} a day`;
+  $("unfollowBtn").textContent = `Unfollow ${fmt.format(n)}`;
+}
+
+function isReading() {
+  const j = S.status?.read_job; return !!j && (j.state === "running" || j.state === "waiting");
+}
+
+function renderStrips() {
+  const st = S.status; const out = [];
+  const j = st.read_job;
+  if (j && (j.state === "running" || j.state === "waiting")) {
+    const pct = j.total ? Math.round((j.done / j.total) * 100) : null;
+    out.push(`<div class="strip"><div class="grow"><strong>${j.kind === "scan" ? "Loading from X" : "Checking posting style"}</strong>
+      <span class="msg">${esc(j.message || "Starting…")}</span>
+      <div class="progress ${pct === null ? "indeterminate" : ""}"><i style="width:${pct ?? 30}%"></i></div></div>
+      <button class="btn" data-action="stop-task">Stop</button></div>`);
+  } else if (j && (j.state === "error" || j.state === "stopped") && !S.dismissed?.[j.message]) {
+    out.push(`<div class="strip notice"><div class="grow"><strong>${j.state === "error" ? "That didn't work" : "Stopped"}</strong>
+      <span class="msg">${esc(j.message)}</span></div><button class="btn btn-quiet" data-dismiss="${esc(j.message)}">Dismiss</button></div>`);
+  }
+  const w = st.write;
+  if (w.queue > 0 || w.state === "running" || w.state === "waiting") {
+    const total = w.done + w.queue;
+    const pct = total ? Math.round((w.done / total) * 100) : 0;
+    const paused = w.state === "paused" || w.state === "idle";
+    out.push(`<div class="strip unfollowing"><div class="grow"><strong>${paused ? "Unfollowing is paused" : w.fast ? "Unfollowing fast" : "Unfollowing"}</strong>
+      <span class="msg">${fmt.format(w.done)} done, ${fmt.format(w.queue)} to go. ${esc(w.message)}</span>
+      <div class="progress"><i style="width:${pct}%"></i></div></div>
+      ${paused ? `<button class="btn btn-primary" data-action="resume">Resume</button>` : `<button class="btn" data-action="pause">Pause</button>`}
+      <button class="btn btn-quiet" data-action="cancel">Cancel the rest</button>
+      ${w.fast || w.queue < 2 ? "" : `<button class="btn btn-cut" data-action="yeet">Yeet the rest</button>`}</div>`);
+  } else if (w.message && w.state === "idle" && !S.dismissed?.[w.message]) {
+    out.push(`<div class="strip notice"><div class="grow"><span class="msg">${esc(w.message)}</span></div>
+      <button class="btn btn-quiet" data-dismiss="${esc(w.message)}">Dismiss</button></div>`);
+  }
+  $("strips").innerHTML = out.join("");
+}
+
+function renderHeader() {
+  const st = S.status;
+  const me = st.me;
+  $("me").innerHTML = me ? `${me.avatar ? `<img src="${esc(me.avatar)}" alt="" referrerpolicy="no-referrer">` : ""}@${esc(me.username)}` : "";
+  const b = st.budget; const pct = Math.min(100, Math.round((b.used / b.cap) * 100));
+  $("budget").innerHTML = `<span><span class="num">${b.used}</span> of <span class="num">${b.cap}</span> unfollows today</span>
+    <span class="budget-bar"><i style="width:${pct}%"></i></span>`;
+}
+
+function renderCriteria() {
+  document.querySelectorAll(".crit").forEach((btn) => {
+    const c = S.crit[btn.dataset.crit];
+    btn.setAttribute("aria-pressed", c.on);
+    const input = btn.querySelector("input");
+    if (input && document.activeElement !== input) input.value = c[input.dataset.param];
+    if (input && input.dataset.param === "text") sizeTextInput(input);
+    else if (input) input.style.width = `${Math.max(2, String(input.value).length) + 1}ch`;
+  });
+  $("matchMode").textContent = S.crit.match;
+  $("matchWrap").hidden = activeCrit().length < 2;
+  const noFollowers = S.status && S.accounts.length && S.accounts[0].follows_you === null;
+  document.querySelector('[data-crit="nofollow"]').title = noFollowers ? "Turn this on to add your followers list" : "";
+}
+
+function render() {
+  const st = S.status;
+  $("demoBanner").hidden = !st.demo;
+  if (st.demo && !st.connected && !$("k1").value) {
+    ["demo-consumer-key", "demo-secret", "demo-token", "demo-token-secret"].forEach((v, i) => ($(`k${i + 1}`).value = v));
+  }
+  $("connectView").hidden = st.connected;
+  $("appView").hidden = !st.connected;
+  if (!st.connected) { $("actionbar").hidden = true; return; }
+  renderHeader();
+  renderStrips();
+  document.body.classList.toggle("no-style", !st.settings.show_posting_style);
+  const hasData = !!st.scanned_at;
+  $("emptyState").hidden = hasData || isReading();
+  if (!hasData && !isReading() && !$("emptyState").contains(document.activeElement)) $("emptyState").innerHTML = loadPanel(false);
+  $("workspace").hidden = !hasData;
+  if (hasData) { renderSnapLine(); renderCriteria(); renderTable(); }
+}
+
+/* ---------------- data loop ---------------- */
+async function refresh() {
+  try {
+    S.status = await api("/api/status");
+    if (S.status.connected && S.status.version !== S.version) {
+      const data = await api("/api/accounts");
+      S.version = data.version;
+      S.accounts = data.accounts.map(derive);
+      S.snaps = await api("/api/snapshots");
+    }
+    render();
+  } catch (e) { console.error(e); }
+  const busy = isReading() || (S.status && (S.status.write.queue > 0 || S.status.write.state === "running"));
+  clearTimeout(refresh.t);
+  refresh.t = setTimeout(refresh, busy ? 1500 : 6000);
+}
+
+async function act(path, body = {}, okMsg) {
+  try {
+    const res = await api(path, body);
+    if (okMsg) toast(typeof okMsg === "function" ? okMsg(res) : okMsg);
+    await refresh();
+    return res;
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- events ---------------- */
+$("connectForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const body = Object.fromEntries(f.entries()); body.remember = f.get("remember") === "on";
+  $("connectBtn").disabled = true; $("connectBtn").textContent = "Checking keys…"; $("connectError").hidden = true;
+  try {
+    await api("/api/connect", body);
+    e.target.reset();
+    await refresh();
+  } catch (err) {
+    $("connectError").textContent = err.message; $("connectError").hidden = false;
+  } finally { $("connectBtn").disabled = false; $("connectBtn").textContent = "Connect to X"; }
+});
+
+function when(ts, short = false) {
+  const d = new Date(ts * 1000);
+  return short ? d.toLocaleDateString(undefined, { month: "long", day: "numeric" })
+    : d.toLocaleString(undefined, { weekday: "short", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+async function exportSnapshot(file) {
+  try {
+    const res = await fetch(`/api/snapshot?file=${encodeURIComponent(file)}`, { headers: { "X-Prune-Token": TOKEN } });
+    if (!res.ok) throw new Error("Couldn't read that snapshot.");
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url; a.download = `prune-snapshot-${S.status.me.username}-${file}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (err) { toast(err.message); }
+}
+
+$("importFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  let snap;
+  try { snap = JSON.parse(await f.text()); } catch { toast("That file isn't a Prune snapshot."); return; }
+  if ($("loadDlg").open) $("loadDlg").close();
+  act("/api/snapshot/import", { snapshot: snap }, "Imported and opened snapshot");
+});
+
+$("archiveFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  if ($("loadDlg").open) $("loadDlg").close();
+  toast(`Reading ${f.name}…`);
+  try {
+    const res = await fetch("/api/archive/import", {
+      method: "POST", headers: { "X-Prune-Token": TOKEN, "Content-Type": "application/octet-stream" }, body: f,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Couldn't read that archive.");
+    const d = data.archive_date ? ` from ${when(data.archive_date, true)}` : "";
+    toast(`Loaded ${fmt.format(data.followers)} followers from your archive${d}. No X charges.`);
+    await refresh();
+  } catch (err) { toast(err.message); }
+});
+
+function renderSnapLine() {
+  const st = S.status; if (!st.scanned_at) return;
+  const ageDays = Math.floor((Date.now() / 1000 - st.scanned_at) / 86400);
+  let txt = `Showing your snapshot from <strong>${esc(when(st.scanned_at))}</strong>.`;
+  if (ageDays >= 1) txt += ` <span class="old">${ageDays} day${ageDays === 1 ? "" : "s"} old</span>`;
+  if (st.followers_loaded_at === null || st.followers_loaded_at === undefined) txt += " Followers weren't loaded, so “Follows you” is blank.";
+  else if (st.followers_source === "archive") txt += ` Followers list from your X archive of ${esc(when(st.followers_loaded_at, true))}.`;
+  else if (Math.abs(st.followers_loaded_at - st.scanned_at) > 3600) txt += ` Followers list from ${esc(when(st.followers_loaded_at, true))}.`;
+  if (ageDays >= 1) txt += " Anyone you've followed since isn't listed.";
+  $("snapLine").innerHTML = `<span class="grow">${txt}</span>`;
+}
+
+function money(x) {
+  if (x === null || Number.isNaN(x)) return "unknown";
+  if (x > 0 && x < 0.01) return "under 1¢";
+  return `$${x.toFixed(2)}`;
+}
+S.followersChoice = null;  // "keep" | "skip" | "x" | "archive"
+
+function loadPanel(inDialog) {
+  const st = S.status; const me = st.me || {}; const price = st.settings.price_per_account;
+  const est = st.estimate || {};
+  const nFollowing = me.following_count ?? null, nFollowers = me.followers_count ?? null;
+  const cFollowing = est.following == null ? null : est.following * price;
+  const hasFollowing = !!st.scanned_at && S.accounts.length > 0;
+  const fChoice = hasFollowing ? (S.followingChoice || "x") : "x";
+  const followersBill = fChoice === "keep" ? est.followers_alone : est.followers;
+  const cFollowers = followersBill == null ? null : followersBill * price;
+  const suggestArchive = cFollowers !== null && cFollowers >= 3 && st.followers_source !== "archive";
+  const costLabel = (c, n) => (c === null ? "unknown" : c === 0 && n ? "Free today" : money(c));
+  const hasFollowers = !!st.followers_loaded_at;
+  let choice = S.followersChoice || (hasFollowers ? "keep" : "skip");
+  if (!hasFollowers && choice === "keep") choice = "skip";
+  if (hasFollowers && choice === "skip") choice = "keep";
+  const total = (fChoice === "x" ? (cFollowing ?? 0) : 0) + (choice === "x" ? (cFollowers ?? 0) : 0);
+  const nothing = fChoice === "keep" && choice !== "x";
+  const goLabel = nothing ? "Nothing to load"
+    : (fChoice === "keep" ? "Load followers from X" : "Load from X") +
+      (cFollowing === null && fChoice === "x" ? "" : total === 0 ? ", free today" : `, about ${money(total)}`);
+  const count = (n) => (n === null ? "Count unknown" : `${fmt.format(n)} accounts`);
+  const prev = !st.followers_loaded_at ? "" : st.followers_source === "archive"
+    ? ` Now using your archive's list from ${when(st.followers_loaded_at, true)}; leave this off to keep using it.`
+    : ` Last loaded ${when(st.followers_loaded_at, true)}; leave this off to keep using that list.`;
+  const snaps = S.snaps?.snapshots || [];
+  const snapRows = snaps.slice(0, 6).map((x) => {
+    const cur = x.file === S.snaps.current;
+    return `<div class="snap ${cur ? "current" : ""}"><span><span class="when">${esc(when(x.following_at))}</span>
+      <span class="what">${fmt.format(x.following)} you follow${x.followers === null ? ", no followers list" : `, ${fmt.format(x.followers)} followers`}${x.followers_at && Math.abs(x.followers_at - x.following_at) > 3600 ? ` (from ${esc(when(x.followers_at, true))})` : ""}</span></span>
+      <button class="btn btn-quiet" data-snap-export="${esc(x.file)}">Export</button>
+      ${cur ? `<span class="pill maybe">Open now</span>` : `<button class="btn" data-snap-open="${esc(x.file)}">Open, free</button>`}</div>`;
+  }).join("");
+  const snapSection = `<div class="snaps">
+      <h3>Saved snapshots</h3>
+      <small>Every load is saved on this computer. Opening one costs nothing, but it won't include changes since it was taken.</small>
+      ${snapRows || `<small>No snapshots yet. Your first load from X will be saved here.</small>`}
+      <span><button class="linkish" data-snap-import>Import a snapshot file</button> <small>from another computer or a backup.</small></span>
+    </div>
+    <div class="load-or">or load fresh from X</div>`;
+  return `<div class="load">
+    <h2>${inDialog && S.loadNote ? "Add your followers list" : inDialog ? "Snapshots and refresh" : "Load your accounts from X"}</h2>
+    ${inDialog && S.loadNote ? `<p class="load-note">${esc(S.loadNote)}</p>` : ""}
+    ${inDialog && S.loadNote ? "" : snaps.length || inDialog ? snapSection : `<p><button class="linkish" data-snap-import>Import a snapshot file</button> if you've saved one on another computer. It's free and skips loading from X.</p>`}
+    <p>Choose what to read. X charges for each account it reads, so here's the estimate before anything runs.</p>
+    <div class="load-opts">
+      ${hasFollowing ? `<fieldset class="load-group">
+        <legend class="group-head"><b>Who I follow</b><span class="pill req">Required</span></legend>
+        <small>Needed for everything in Prune. Choose one:</small>
+        <label class="choice"><input type="radio" name="gsrc" value="keep" ${fChoice === "keep" ? "checked" : ""}>
+          <span><b>Use my current snapshot</b><small>${fmt.format(S.accounts.length)} accounts, from ${when(st.scanned_at, true)}. Anyone you've followed since won't be listed.</small></span>
+          <span class="load-cost">Free</span></label>
+        <label class="choice"><input type="radio" name="gsrc" value="x" ${fChoice === "x" ? "checked" : ""}>
+          <span><b>Reload from X</b><small>${count(nFollowing)}.</small></span>
+          <span class="load-cost">${costLabel(cFollowing, nFollowing)}</span></label>
+      </fieldset>` : `<div class="load-group">
+        <div class="group-head"><b>Who I follow</b><span class="pill req">Required</span><span class="load-cost">${costLabel(cFollowing, nFollowing)}</span></div>
+        <small>Needed for everything in Prune. ${count(nFollowing)}.</small>
+      </div>`}
+      <fieldset class="load-group">
+        <legend class="group-head"><b>Who follows me back</b><span class="pill maybe">Optional</span></legend>
+        <small>Fills the Follows you column and the “don't follow me back” rule. Choose one:</small>
+        <label class="choice"><input type="radio" name="fsrc" value="${hasFollowers ? "keep" : "skip"}" ${choice === "keep" || choice === "skip" ? "checked" : ""}>
+          <span><b>${hasFollowers ? "Keep the current list" : "Skip for now"}</b><small>${hasFollowers
+            ? (st.followers_source === "archive" ? `From your X archive of ${when(st.followers_loaded_at, true)}.` : `Loaded ${when(st.followers_loaded_at, true)}.`)
+            : "The Follows you column stays blank until you add a list."}</small></span>
+          <span class="load-cost">Free</span></label>
+        <label class="choice"><input type="radio" name="fsrc" value="x" ${choice === "x" ? "checked" : ""}>
+          <span><b>Load from X</b><small>${count(nFollowers)}.${est.followers_overlap_known || fChoice === "keep" ? "" : " Followers you also follow are only billed once, so it may cost less."}</small></span>
+          <span class="load-cost">${costLabel(cFollowers, nFollowers)}</span></label>
+        <label class="choice"><input type="radio" name="fsrc" value="archive" ${choice === "archive" ? "checked" : ""}>
+          <span><b>Use my X archive</b>${suggestArchive ? ` <span class="pill nft">Saves about ${money(cFollowers)}</span>` : ""}<small>Your free X data archive includes your followers list. Request it in X under Settings, Your account, Download an archive of your data. It usually arrives within a day or two.</small></span>
+          <span class="load-cost">Free</span></label>
+        ${choice === "archive" ? `<div class="choice-action"><button class="btn" data-archive-import>Choose archive file</button>
+          <small>Pick the .zip, or the follower.js file inside it. You can do this before or after loading who you follow.</small></div>` : ""}
+      </fieldset>
+    </div>
+    <div class="load-foot">
+      <span class="dim">Estimated at $${price} per account, X's rate for reading your own lists. X bills each account once per day (UTC day, which starts at 8 PM Eastern), so anything already loaded today is free. <button class="linkish" data-open-settings>Change rates in Settings</button></span>
+      <span style="display:flex;gap:8px">${inDialog ? `<button class="btn" data-load-cancel>Cancel</button>` : ""}
+      <button class="btn btn-primary" data-load-go ${nothing ? "disabled" : ""}>${goLabel}</button></span>
+    </div></div>`;
+}
+
+function onLoadPanel(e, container, inDialog) {
+  if (e.target.matches('input[name="gsrc"]')) {
+    if (e.type !== "change") return;
+    S.followingChoice = e.target.value;
+    container.innerHTML = loadPanel(inDialog);
+    container.querySelector(`input[name="gsrc"][value="${S.followingChoice}"]`)?.focus();
+    return;
+  }
+  if (e.target.matches('input[name="fsrc"]')) {
+    if (e.type !== "change") return;
+    S.followersChoice = e.target.value;
+    container.innerHTML = loadPanel(inDialog);
+    container.querySelector(`input[name="fsrc"][value="${S.followersChoice}"]`)?.focus();
+    return;
+  }
+  if (e.target.closest("[data-open-settings]")) { if (inDialog) $("loadDlg").close(); $("settingsBtn").click(); return; }
+  if (e.target.closest("[data-load-cancel]")) { $("loadDlg").close(); return; }
+  const open = e.target.closest("[data-snap-open]")?.dataset.snapOpen;
+  if (open) { if (inDialog) $("loadDlg").close(); act("/api/snapshot/open", { file: open }, "Opened snapshot"); return; }
+  const exp = e.target.closest("[data-snap-export]")?.dataset.snapExport;
+  if (exp) { exportSnapshot(exp); return; }
+  if (e.target.closest("[data-archive-import]")) { S.loadStarted = true; }
+  if (e.target.closest("[data-archive-import]")) { $("archiveFile").value = ""; $("archiveFile").click(); return; }
+  if (e.target.closest("[data-snap-import]")) { $("importFile").value = ""; $("importFile").click(); return; }
+  if (e.target.closest("[data-load-go]")) {
+    S.loadStarted = true;
+    if (inDialog) $("loadDlg").close();
+    const keepFollowing = !!S.status.scanned_at && S.accounts.length > 0 && S.followingChoice === "keep";
+    act("/api/scan", { followers: S.followersChoice === "x", following: !keepFollowing },
+      inDialog ? (keepFollowing ? "Loading your followers from X" : "Refreshing from X") : null);
+  }
+}
+$("emptyState").addEventListener("click", (e) => onLoadPanel(e, $("emptyState"), false));
+$("emptyState").addEventListener("change", (e) => onLoadPanel(e, $("emptyState"), false));
+$("loadDlgBody").addEventListener("click", (e) => onLoadPanel(e, $("loadDlgBody"), true));
+$("loadDlgBody").addEventListener("change", (e) => onLoadPanel(e, $("loadDlgBody"), true));
+$("rescanBtn").onclick = () => { S.followersChoice = null; S.followingChoice = "x"; $("loadDlgBody").innerHTML = loadPanel(true); $("loadDlg").showModal(); };
+
+function toggleCrit(key) {
+  const c = S.crit[key];
+  if (key === "words" && !c.on && !String(c.text || "").trim()) {
+    document.querySelector('.crit[data-crit="words"] input').focus();
+    return;
+  }
+  c.on = !c.on; saveCrit(); S.limit = PAGE; renderCriteria(); renderTable();
+  if (key === "nofollow" && c.on) promptForFollowers();
+}
+function promptForFollowers() {
+  if (S.status.followers_loaded_at) return;
+  S.followersChoice = "x";
+  S.followingChoice = "keep";  // only the followers list is missing; reuse the snapshot by default
+  S.loadStarted = false;
+  S.loadNote = "“Don't follow me back” needs your followers list, which hasn't been loaded yet. Choose how to get it below; nothing runs until you press the button.";
+  $("loadDlgBody").innerHTML = loadPanel(true);
+  $("loadDlg").showModal();
+}
+$("loadDlg").addEventListener("close", () => {
+  // closed the followers prompt without getting a list: switch the rule back off so the table isn't empty
+  if (S.loadNote && !S.loadStarted && !S.status.followers_loaded_at && S.crit.nofollow.on) {
+    S.crit.nofollow.on = false; saveCrit(); renderCriteria(); renderTable();
+  }
+  S.loadNote = null; S.loadStarted = false;
+});
+$("sentence").addEventListener("click", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const btn = e.target.closest(".crit");
+  if (btn) toggleCrit(btn.dataset.crit);
+});
+
+/* drag a number left or right to change it; click to type */
+function scrubValue(param, start, dx) {
+  if (param === "pct") return Math.max(0, Math.min(100, Math.round(start + dx / 3)));
+  if (param === "days") {
+    const v = start < 30 ? start + dx / 3 : start * Math.pow(1.01, dx);
+    return Math.max(1, Math.min(5000, Math.round(v)));
+  }
+  const v = Math.max(1, start) * Math.pow(1.02, dx);  // follower counts: proportional steps
+  const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 1));
+  return Math.max(1, Math.min(1e9, Math.round(v / mag) * mag));
+}
+let scrub = null;
+$("sentence").addEventListener("pointerdown", (e) => {
+  const input = e.target.closest(".crit input");
+  if (!input || document.activeElement === input || input.dataset.param === "text") return;
+  e.preventDefault();
+  input.setPointerCapture(e.pointerId);
+  const c = S.crit[input.closest(".crit").dataset.crit];
+  scrub = { input, c, param: input.dataset.param, x: e.clientX, start: c[input.dataset.param], moved: false };
+});
+$("sentence").addEventListener("pointermove", (e) => {
+  if (!scrub) return;
+  const dx = e.clientX - scrub.x;
+  if (!scrub.moved && Math.abs(dx) < 4) return;
+  scrub.moved = true; document.body.classList.add("scrubbing");
+  const v = scrubValue(scrub.param, scrub.start, dx);
+  if (v === scrub.c[scrub.param]) return;
+  scrub.c[scrub.param] = v; scrub.c.on = true;
+  scrub.input.value = v; scrub.input.style.width = `${Math.max(2, String(v).length) + 1}ch`;
+  cancelAnimationFrame(scrub.raf);
+  scrub.raf = requestAnimationFrame(() => { renderCriteria(); renderTable(); });
+});
+const endScrub = () => {
+  if (!scrub) return;
+  const { input, moved } = scrub; scrub = null; document.body.classList.remove("scrubbing");
+  if (moved) { saveCrit(); S.limit = PAGE; renderTable(); } else { input.focus(); input.select(); }
+};
+$("sentence").addEventListener("pointerup", endScrub);
+$("sentence").addEventListener("pointercancel", endScrub);
+$("sentence").addEventListener("input", (e) => {
+  if (e.target.tagName !== "INPUT") return;
+  const c = S.crit[e.target.closest(".crit").dataset.crit];
+  if (e.target.dataset.param === "text") {
+    c.text = e.target.value; c.on = c.text.trim() !== "";
+    sizeTextInput(e.target);
+    saveCrit(); S.limit = PAGE; renderCriteria(); renderTable();
+    return;
+  }
+  const v = parseInt(e.target.value.replace(/[^0-9]/g, ""), 10);
+  e.target.style.width = `${Math.max(2, e.target.value.length) + 1}ch`;
+  if (!Number.isNaN(v)) { c[e.target.dataset.param] = v; c.on = true; saveCrit(); renderCriteria(); renderTable(); }
+});
+$("sentence").addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") {
+    if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && e.target.dataset.param !== "text") {
+      e.preventDefault();
+      const c = S.crit[e.target.closest(".crit").dataset.crit], param = e.target.dataset.param;
+      c[param] = scrubValue(param, c[param], (e.key === "ArrowUp" ? 1 : -1) * (param === "n" ? 10 : 3));
+      c.on = true; saveCrit(); renderCriteria(); renderTable();
+    }
+    return;
+  }
+  if (e.target.classList.contains("crit") && (e.key === " " || e.key === "Enter")) {
+    e.preventDefault(); toggleCrit(e.target.dataset.crit);
+  }
+});
+$("matchMode").onclick = (e) => { e.stopPropagation(); S.crit.match = S.crit.match === "any" ? "all" : "any"; saveCrit(); renderCriteria(); renderTable(); };
+
+const PRESETS = {
+  nft: { nft: { on: true }, match: "any" },
+  quiet: { inactive: { on: true, days: 180 }, match: "any" },
+  oneway: { nofollow: { on: true }, match: "any" },
+  reposters: { reposts: { on: true, pct: 50 }, match: "any" },
+  clear: {},
+};
+document.querySelectorAll("[data-preset]").forEach((b) => b.onclick = () => {
+  const p = PRESETS[b.dataset.preset];
+  const next = structuredClone(DEFAULT_CRIT);
+  for (const k of Object.keys(TESTS)) next[k] = { ...S.crit[k], on: false };
+  for (const [k, v] of Object.entries(p)) next[k] = typeof v === "object" ? { ...next[k], ...v } : v;
+  next.match = p.match || "any";
+  S.crit = next; saveCrit(); S.limit = PAGE; renderCriteria(); renderTable();
+  if (next.nofollow.on) promptForFollowers();
+});
+
+$("search").addEventListener("input", (e) => { S.search = e.target.value; S.limit = PAGE; renderTable(); });
+
+document.querySelector("thead").addEventListener("click", (e) => {
+  const th = e.target.closest("th[data-sort]"); if (!th) return;
+  const key = th.dataset.sort;
+  if (S.sort.key === key) S.sort.dir = S.sort.dir === "asc" ? "desc" : "asc";
+  else S.sort = { key, dir: key === "name" ? "asc" : "desc" };
+  renderTable();
+});
+
+$("rows").addEventListener("change", (e) => {
+  const id = e.target.dataset.sel; if (!id) return;
+  e.target.checked ? S.selected.add(id) : S.selected.delete(id);
+  e.target.closest("tr").classList.toggle("is-selected", e.target.checked);
+  renderSelection();
+});
+$("rows").addEventListener("click", (e) => {
+  const id = e.target.closest("[data-keep]")?.dataset.keep; if (!id) return;
+  const a = S.accounts.find((x) => x.id === id);
+  act("/api/keep", { ids: [id], keep: !a.keep });
+});
+$("selectAll").addEventListener("change", (e) => {
+  for (const a of selectableShown()) e.target.checked ? S.selected.add(a.id) : S.selected.delete(a.id);
+  renderTable();
+});
+S.hideKept = (() => { try { return localStorage.getItem("prune.hideKept") === "1"; } catch (e) { return false; } })();
+$("hideKept").addEventListener("change", (e) => {
+  S.hideKept = e.target.checked;
+  try { localStorage.setItem("prune.hideKept", S.hideKept ? "1" : "0"); } catch (err) {}
+  S.limit = PAGE; renderTable();
+});
+S.hideNever = (() => { try { return localStorage.getItem("prune.hideNever") === "1"; } catch (e) { return false; } })();
+$("hideNever").addEventListener("change", (e) => {
+  S.hideNever = e.target.checked;
+  try { localStorage.setItem("prune.hideNever", S.hideNever ? "1" : "0"); } catch (err) {}
+  S.limit = PAGE; renderTable();
+});
+
+const QS_LABEL = { idle: "that have gone longest without posting", newest: "that joined X most recently", oldest: "that joined X longest ago" };
+$("qsBtn").onclick = () => {
+  const n = Math.max(1, parseInt($("qsN").value, 10) || 0);
+  const by = $("qsBy").value;
+  let pool = selectableShown();
+  if (by === "idle") pool = pool.filter((a) => a.neverPosted || a.days !== null)
+    .sort((x, y) => (y.neverPosted ? 1e9 : y.days) - (x.neverPosted ? 1e9 : x.days));
+  else pool = pool.filter((a) => a.ageDays !== null)
+    .sort((x, y) => (by === "newest" ? x.ageDays - y.ageDays : y.ageDays - x.ageDays));
+  const pick = pool.slice(0, n);
+  S.selected = new Set(pick.map((a) => a.id));
+  S.sort = by === "idle" ? { key: "last", dir: "desc" } : { key: "age", dir: by === "newest" ? "asc" : "desc" };
+  S.limit = Math.max(S.limit, pick.length);
+  renderTable();
+  toast(pick.length ? `Selected ${fmt.format(pick.length)} account${pick.length === 1 ? "" : "s"} ${QS_LABEL[by]}` : "No shown accounts to select.");
+};
+$("qsN").addEventListener("keydown", (e) => { if (e.key === "Enter") $("qsBtn").click(); });
+
+$("moreBtn").onclick = () => { S.limit += PAGE; renderTable(); };
+$("clearSel").onclick = () => { S.selected.clear(); renderTable(); };
+
+function openConfirm({ title, body, list = "", extra = "", ok, danger = true, onOk }) {
+  $("confirmTitle").textContent = title;
+  $("confirmBody").textContent = body;
+  $("confirmList").innerHTML = list;
+  $("confirmExtra").innerHTML = extra;
+  $("confirmOk").textContent = ok;
+  $("confirmOk").className = danger ? "btn btn-cut" : "btn btn-primary";
+  $("confirmDlg").returnValue = "";
+  $("confirmDlg").onclose = () => { if ($("confirmDlg").returnValue === "ok") onOk(); };
+  $("confirmDlg").showModal();
+}
+
+$("analyzeBtn").onclick = () => {
+  const ids = S.view.filter((a) => !a.analysis).map((a) => a.id);
+  const s = S.status.settings;
+  let posts = s.posts_to_check;
+  const options = [...new Set([10, 20, 50, 100, posts])].sort((a, b) => a - b);
+  const costOf = (n) => ids.length * n * s.price_per_post;
+  const update = () => {
+    $("styleCost").textContent = `${fmt.format(ids.length)} accounts × ${posts} posts = up to ${fmt.format(ids.length * posts)} posts at $${s.price_per_post} each, about ${money(costOf(posts))}.`;
+    $("confirmOk").textContent = `Check ${fmt.format(ids.length)}, about ${money(costOf(posts))}`;
+  };
+  openConfirm({
+    title: `Check posting style for ${fmt.format(ids.length)} account${ids.length === 1 ? "" : "s"}?`,
+    body: "Prune reads each account's most recent posts and sorts them three ways: reposts of someone else's post, replies to other people, and the account's own posts. Quote posts and thread posts (which reply to the account's own post) count as its own. The Reposts and Replies columns show each share as a percentage.",
+    extra: `<div class="style-pick">
+        <div class="group-head"><b>Recent posts to read per account</b></div>
+        <div class="seg" role="radiogroup" aria-label="Posts per account">${options.map((n) =>
+          `<label><input type="radio" name="stylePosts" value="${n}" ${n === posts ? "checked" : ""}><span>${n}</span></label>`).join("")}</div>
+        <small>More posts give a steadier picture. Fewer is cheaper, but one busy afternoon can tip the numbers. Filter the table first to check fewer accounts.</small>
+        <p class="style-cost" id="styleCost"></p>
+      </div>`,
+    ok: "", danger: false,
+    onOk: () => act("/api/analyze", { ids, posts }),
+  });
+  $("confirmExtra").onchange = (e) => { if (e.target.name === "stylePosts") { posts = Number(e.target.value); update(); } };
+  update();
+};
+
+$("unfollowBtn").onclick = () => {
+  const ids = [...S.selected];
+  const names = ids.map((id) => S.accounts.find((a) => a.id === id)).filter(Boolean);
+  const s = S.status.settings;
+  openConfirm({
+    title: `Unfollow ${fmt.format(ids.length)} account${ids.length === 1 ? "" : "s"}?`,
+    body: `Prune will unfollow up to ${s.daily_cap} in any 24 hours, pausing ${s.min_delay}–${s.max_delay} seconds between each. Keep this window and the Prune app open until it finishes. You can pause or cancel at any time.`,
+    list: names.slice(0, 12).map((a) => `<li>@${esc(a.username)}</li>`).join("") +
+      (names.length > 12 ? `<li>and ${fmt.format(names.length - 12)} more</li>` : ""),
+    ok: `Unfollow ${fmt.format(ids.length)}`,
+    onOk: async () => { S.selected.clear(); await act("/api/unfollow", { ids }, (r) => `Queued ${fmt.format(r.added)} to unfollow`); },
+  });
+};
+
+$("strips").addEventListener("click", (e) => {
+  const d = e.target.closest("[data-dismiss]");
+  if (d) { S.dismissed = { ...(S.dismissed || {}), [d.dataset.dismiss]: true }; renderStrips(); return; }
+  const a = e.target.closest("[data-action]")?.dataset.action; if (!a) return;
+  if (a === "cancel" && !confirm("Cancel the unfollows that haven't happened yet?")) return;
+  if (a === "yeet") {
+    const n = S.status.write.queue;
+    const mins = Math.max(1, Math.round((n * 12.5) / 60));
+    openConfirm({
+      title: `Unfollow all ${fmt.format(n)} now?`,
+      body: `Prune will skip the daily limit and the breaks, pausing only 5–20 seconds between each, so this takes about ${mins} minute${mins === 1 ? "" : "s"}. Unfollowing this many this quickly is the kind of bulk activity X says can get accounts limited or locked. Prune still stops if X pushes back.`,
+      ok: `Yeet ${fmt.format(n)}`,
+      onOk: () => act("/api/yeet", {}, "Unfollowing the rest fast"),
+    });
+    return;
+  }
+  act(`/api/${a}`);
+});
+
+const SETTING_KEYS = ["daily_cap", "min_delay", "max_delay", "batch_size", "batch_break", "posts_to_check", "price_per_account", "price_per_post"];
+$("settingsBtn").onclick = () => {
+  const s = S.status.settings; const f = $("settingsForm");
+  for (const k of SETTING_KEYS) f.elements[k].value = s[k];
+  f.elements.show_posting_style.checked = s.show_posting_style;
+  $("dataDir").textContent = S.status.data_dir || "";
+  const u = S.status.usage;
+  $("spendLine").innerHTML = `Estimated spend through Prune since ${new Date(u.since * 1000).toLocaleDateString()}: <b>${money(u.estimated_cost)}</b> for ${fmt.format(u.accounts)} accounts and ${fmt.format(u.posts)} posts read. Your X developer console has the exact figure.`;
+  $("settingsDlg").returnValue = "";
+  $("settingsDlg").showModal();
+};
+$("settingsDlg").addEventListener("close", () => {
+  if ($("settingsDlg").returnValue !== "save") return;
+  const f = $("settingsForm"); const body = {};
+  for (const k of SETTING_KEYS) body[k] = Number(f.elements[k].value);
+  body.show_posting_style = f.elements.show_posting_style.checked;
+  act("/api/settings", body, "Settings saved");
+});
+$("disconnectBtn").onclick = () => {
+  $("settingsDlg").close();
+  openConfirm({
+    title: "Forget your API keys?",
+    body: "You'll need to enter all four keys again to use Prune. Your snapshots, kept accounts and history stay on this computer.",
+    ok: "Forget keys",
+    onOk: () => act("/api/disconnect", {}, "Keys forgotten"),
+  });
+};
+$("forgetBtn").onclick = () => {
+  $("settingsDlg").close();
+  const n = S.snaps?.snapshots?.length || 0;
+  openConfirm({
+    title: "Erase saved data?",
+    body: `This deletes ${n ? `${n} snapshot${n === 1 ? "" : "s"}, ` : ""}your kept accounts, unfollow history and spend tally, and cancels any unfollows still waiting. Reloading from X costs money again. Your API keys stay.`,
+    ok: "Erase data",
+    onOk: () => act("/api/erase-data", {}, "Saved data erased"),
+  });
+};
+
+refresh();
+</script>
+</body>
+</html>

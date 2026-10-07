@@ -1,0 +1,11 @@
+# Your saved data: API keys, snapshots, history. Never commit these.
+Your data - do not share/
+Demo data/
+.env
+credentials.json
+
+# Python and OS clutter
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
