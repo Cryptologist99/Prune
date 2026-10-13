@@ -562,7 +562,7 @@ def unfollow_worker():
         if not write_state["fast"] and len(recent) >= s["daily_cap"]:
             free_at = min(e["at"] for e in recent) + 86400 + 5
             write_state.update(state="waiting",
-                               message=f"Reached today's limit of {s['daily_cap']}. Continuing at {clock(free_at)} if Prune is still open.")
+                               message=f"Reached the limit of {s['daily_cap']} in 24 hours. Continuing at {clock(free_at)} if Prune is still open.")
             while time.time() < free_at and not write_state["fast"]:
                 if not interruptible_sleep(min(30, free_at - time.time())) and write_paused.is_set():
                     break

@@ -961,7 +961,7 @@ function renderHeader() {
   const me = st.me;
   $("me").innerHTML = me ? `${me.avatar ? `<img src="${esc(me.avatar)}" alt="" referrerpolicy="no-referrer">` : ""}@${esc(me.username)}` : "";
   const b = st.budget; const pct = Math.min(100, Math.round((b.used / b.cap) * 100));
-  $("budget").innerHTML = `<span><span class="num">${b.used}</span> of <span class="num">${b.cap}</span> unfollows today</span>
+  $("budget").innerHTML = `<span><span class="num">${b.used}</span> of <span class="num">${b.cap}</span> unfollows in the last 24 hours</span>
     <span class="budget-bar"><i style="width:${pct}%"></i></span>`;
 }
 
