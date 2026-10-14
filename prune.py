@@ -771,10 +771,13 @@ def accounts_payload():
         queued = {q["id"] for q in s["queue"]}
         gone = {e["id"] for e in s["log"] if e["result"] in ("unfollowed", "not_found")}
         rows = []
-        for uid in s["order"]:
+        # X returns who you follow newest-first, so list position is the order you followed them
+        # (1 = most recent). X doesn't publish follow dates or formally promise this order.
+        for rank, uid in enumerate(s["order"], 1):
             if uid in gone:
                 continue
             a = dict(s["accounts"][uid])
+            a["follow_rank"] = rank
             a["follows_you"] = (uid in followers) if followers is not None else None
             a["keep"] = uid in keep
             a["queued"] = uid in queued

@@ -212,7 +212,7 @@ details.help ul { padding-left: 18px; margin: 6px 0 0; }
 .tablewrap {
   background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow-x: auto;
 }
-table { width: 100%; border-collapse: collapse; min-width: 1160px; }
+table { width: 100%; border-collapse: collapse; min-width: 1250px; }
 th, td { padding: 10px 10px; text-align: left; vertical-align: middle; white-space: nowrap; }
 thead th {
   position: sticky; top: 0; background: var(--surface); z-index: 1;
@@ -530,6 +530,8 @@ dialog::backdrop { background: rgba(16, 28, 23, .45); }
         <option value="idle">longest since last post</option>
         <option value="newest">newest accounts</option>
         <option value="oldest">oldest accounts</option>
+        <option value="firstfollowed">followed longest ago</option>
+        <option value="lastfollowed">followed most recently</option>
       </select>
       <button class="btn" id="qsBtn">Select</button>
     </div>
@@ -541,6 +543,7 @@ dialog::backdrop { background: rgba(16, 28, 23, .45); }
             <th class="c-check"><input type="checkbox" id="selectAll" aria-label="Select all shown"></th>
             <th data-sort="name"><button>Account <span class="arrow"></span></button></th>
             <th data-sort="last"><button>Last post <span class="arrow"></span></button></th>
+            <th class="num" data-sort="followed" title="The order you followed each account: 1 is the one you followed most recently. X doesn't share follow dates."><button>Follow order <span class="arrow"></span></button></th>
             <th data-sort="age"><button>Account age <span class="arrow"></span></button></th>
             <th data-sort="follows"><button>Follows you <span class="arrow"></span></button></th>
             <th class="num" data-sort="followers"><button>Followers <span class="arrow"></span></button></th>
@@ -762,6 +765,7 @@ const SORTS = {
   last: (a) => (a.neverPosted ? 1e9 : a.days),
   follows: (a) => (a.follows_you === null ? null : a.follows_you ? 1 : 0),
   age: (a) => a.ageDays,
+  followed: (a) => a.follow_rank ?? null,
   followers: (a) => a.followers,
   following: (a) => a.following,
   replies: (a) => a.replyPct,
@@ -856,6 +860,7 @@ function rowHtml(a) {
       <a class="name" href="https://x.com/${esc(a.username)}" target="_blank" rel="noopener">${esc(a.name || a.username)}</a><span class="handle">@${esc(a.username)}</span>${status}
       <p class="bio" title="${esc(a.bio)}">${highlightBio(a.bio) || "&nbsp;"}</p></div></div></td>
     <td>${last}</td>
+    <td class="num"><span title="${a.follow_rank === 1 ? "The account you followed most recently" : `${fmt.format(a.follow_rank - 1)} accounts followed after this one`}">${a.follow_rank ? fmt.format(a.follow_rank) : ""}</span></td>
     <td>${age}</td>
     <td>${follows}</td>
     <td class="num">${cell(fmt.format(a.followers), h.many || h.few)}</td>
@@ -871,7 +876,7 @@ function renderTable() {
   computeView();
   const shown = S.view.slice(0, S.limit);
   $("rows").innerHTML = shown.map(rowHtml).join("") ||
-    `<tr><td colspan="11"><div class="empty" style="border:none"><h2>No accounts match</h2><p>Try turning off a rule or switching to “any” of these.</p></div></td></tr>`;
+    `<tr><td colspan="12"><div class="empty" style="border:none"><h2>No accounts match</h2><p>Try turning off a rule or switching to “any” of these.</p></div></td></tr>`;
   const total = S.accounts.length;
   const kept = S.accounts.filter((a) => a.keep).length;
   const never = S.accounts.filter((a) => a.neverPosted && !(S.hideKept && a.keep)).length;
@@ -1377,18 +1382,23 @@ $("hideNever").addEventListener("change", (e) => {
   S.limit = PAGE; renderTable();
 });
 
-const QS_LABEL = { idle: "that have gone longest without posting", newest: "that joined X most recently", oldest: "that joined X longest ago" };
+const QS_LABEL = { idle: "that have gone longest without posting", newest: "that joined X most recently", oldest: "that joined X longest ago",
+  firstfollowed: "you followed longest ago", lastfollowed: "you followed most recently" };
 $("qsBtn").onclick = () => {
   const n = Math.max(1, parseInt($("qsN").value, 10) || 0);
   const by = $("qsBy").value;
   let pool = selectableShown();
   if (by === "idle") pool = pool.filter((a) => a.neverPosted || a.days !== null)
     .sort((x, y) => (y.neverPosted ? 1e9 : y.days) - (x.neverPosted ? 1e9 : x.days));
+  else if (by === "firstfollowed" || by === "lastfollowed") pool = pool.filter((a) => a.follow_rank)
+    .sort((x, y) => (by === "lastfollowed" ? x.follow_rank - y.follow_rank : y.follow_rank - x.follow_rank));
   else pool = pool.filter((a) => a.ageDays !== null)
     .sort((x, y) => (by === "newest" ? x.ageDays - y.ageDays : y.ageDays - x.ageDays));
   const pick = pool.slice(0, n);
   S.selected = new Set(pick.map((a) => a.id));
-  S.sort = by === "idle" ? { key: "last", dir: "desc" } : { key: "age", dir: by === "newest" ? "asc" : "desc" };
+  S.sort = by === "idle" ? { key: "last", dir: "desc" }
+    : by === "firstfollowed" || by === "lastfollowed" ? { key: "followed", dir: by === "lastfollowed" ? "asc" : "desc" }
+    : { key: "age", dir: by === "newest" ? "asc" : "desc" };
   S.limit = Math.max(S.limit, pick.length);
   renderTable();
   toast(pick.length ? `Selected ${fmt.format(pick.length)} account${pick.length === 1 ? "" : "s"} ${QS_LABEL[by]}` : "No shown accounts to select.");

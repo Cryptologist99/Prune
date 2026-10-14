@@ -54,8 +54,8 @@ The demo keeps its own saved data in a `Demo data` folder, separate from your re
 
    With two or more rules on, choose whether accounts must match **any** or **all** of them. The **Start from** buttons set up common combinations, including **NFT projects**. Cells that triggered a match are highlighted.
    Drag any number in the sentence left or right to change it, or click it to type. Turning on "don't follow me back" before your followers list is loaded opens the load options, with costs, so you can add it; nothing runs until you choose.
-4. **Sort** by clicking any column heading. **Hide kept** and **Hide never posted** take those accounts out of view.
-   **Quick select** picks the first *N* accounts shown, ranked by longest since last post, newest accounts, or oldest accounts. It respects your filters and skips kept accounts.
+4. **Sort** by clicking any column heading. **Follow order** shows the order you followed each account, with 1 being the most recent. X doesn't share follow dates, but it lists who you follow newest-first, which Prune keeps. X doesn't formally promise that order, so treat it as a good guide rather than exact. **Hide kept** and **Hide never posted** take those accounts out of view.
+   **Quick select** picks the first *N* accounts shown, ranked by longest since last post, newest accounts, oldest accounts, followed longest ago, or followed most recently. It respects your filters and skips kept accounts.
 5. **Keep** accounts you never want to unfollow. Kept accounts can't be selected.
 6. **Select** accounts with the checkboxes (the top checkbox selects everything shown), then press **Unfollow**.
 
