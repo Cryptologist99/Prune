@@ -3,6 +3,8 @@ Your data - do not share/
 Demo data/
 .env
 credentials.json
+cli/candidates*.csv
+cli/unfollow_log.csv
 
 # Python and OS clutter
 __pycache__/

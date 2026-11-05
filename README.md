@@ -119,6 +119,10 @@ X doesn't publish an unfollow limit, but it does penalize "following and/or unfo
 - Kept accounts are saved separately from snapshots, so they stay kept whichever snapshot you open, and they travel with exported snapshots. **Hide kept accounts** above the table hides them from view.
 - Prune talks only to X's official API (`api.x.com`). Profile pictures load from X, and fonts load from Google Fonts.
 
+## Command-line version
+
+The `cli` folder holds the original command-line version of Prune: no browser interface, rules set in a config file, and candidates reviewed in a spreadsheet. See [cli/README.md](cli/README.md).
+
 ## License
 
 Prune is free for personal and noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).

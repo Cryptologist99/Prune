@@ -1,0 +1,25 @@
+# Settings for unfollow_tool.py.
+# Edit these, then run:  python unfollow_tool.py scan
+
+[criteria]
+# Rules that flag an account for review. Set a rule to 0, false or [] to turn it off.
+match = "any"              # "any": flag if any rule matches. "all": flag only if every enabled rule matches.
+inactive_days = 180        # no posts in this many days (accounts that have never posted count too)
+not_following_back = false # flag accounts that don't follow you
+min_followers = 0          # flag accounts with fewer followers than this
+max_followers = 0          # flag accounts with more followers than this
+keywords = []              # flag if the name or bio contains any of these, e.g. ["giveaway", "dm for promo"]
+
+[protect]
+# These accounts are never flagged, whatever the rules above say.
+usernames = []             # e.g. ["nasa", "my_sister"]
+mutuals = true             # keep anyone who follows you back
+verified = false           # keep verified accounts
+
+[pace]
+# Defaults follow the conservative end of what people report as safe.
+daily_cap = 100            # most unfollows in any rolling 24 hours
+min_delay_seconds = 20     # random pause between unfollows...
+max_delay_seconds = 60     # ...somewhere in this range
+batch_size = 25            # after this many in a row,
+batch_break_minutes = 30   # take a longer break
