@@ -118,3 +118,12 @@ X doesn't publish an unfollow limit, but it does penalize "following and/or unfo
 - Earlier versions of Prune saved to a hidden `.prune-for-x` folder in your home directory; Prune moves that data into the new folder the first time it starts. In Settings, **Forget keys** deletes your saved keys but keeps your snapshots, kept accounts and history. **Erase data** does the opposite: it deletes snapshots, kept accounts, unfollow history and the spend tally, but keeps your keys. Export any snapshot you want to keep first.
 - Kept accounts are saved separately from snapshots, so they stay kept whichever snapshot you open, and they travel with exported snapshots. **Hide kept accounts** above the table hides them from view.
 - Prune talks only to X's official API (`api.x.com`). Profile pictures load from X, and fonts load from Google Fonts.
+
+## License
+
+Prune is free for personal and noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+
+- **Allowed:** using it for yourself, hobby projects, study, research, and use by charities, schools and other nonprofits. You can change it and share it, as long as you include the license and the `Required Notice` line.
+- **Not allowed:** commercial use, such as using it in a business, offering it as a paid service, or selling it. For commercial use, contact the author.
+
+It comes as is, with no warranty.
